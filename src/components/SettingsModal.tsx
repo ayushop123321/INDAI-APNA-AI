@@ -6,13 +6,28 @@ interface SettingsModalProps {
   onClose: () => void;
 }
 
+interface SettingsResponse {
+  modelVersion?: string;
+  contextLength?: number;
+  memoryLimit?: number;
+  threads?: number;
+  version?: string;
+  buildDate?: string;
+  benchmarks?: {
+    humaneval: number;
+    mbpp: number;
+    codecontests: number;
+    gsm8k: number;
+  };
+}
+
 export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
   const [modelVersion, setModelVersion] = useState('Standard');
   const [contextLength, setContextLength] = useState(32768);
   const [memoryLimit, setMemoryLimit] = useState(128);
   const [threads, setThreads] = useState(8);
   const [loading, setLoading] = useState(true);
-  const [settings, setSettings] = useState<any>(null);
+  const [settings, setSettings] = useState<SettingsResponse | null>(null);
   const [saved, setSaved] = useState(false);
   
   // Default values
@@ -21,11 +36,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
 
   useEffect(() => {
     // Load environment variables or defaults
-    const envModelName = process.env.NEXT_PUBLIC_MODEL_NAME || 'june13525';
-    const envCompanyName = process.env.NEXT_PUBLIC_COMPANY_NAME || 'Indai Co.';
+    const envModelName = typeof window !== 'undefined' && window.ENV ? 
+      window.ENV.NEXT_PUBLIC_MODEL_NAME : 'june13525';
+    const envCompanyName = typeof window !== 'undefined' && window.ENV ? 
+      window.ENV.NEXT_PUBLIC_COMPANY_NAME : 'Indai Co.';
     
-    setModelName(envModelName);
-    setDeveloperName(envCompanyName);
+    setModelName(envModelName || 'june13525');
+    setDeveloperName(envCompanyName || 'Indai Co.');
     
     // Fetch current settings
     fetchSettings();
@@ -37,11 +54,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
       const response = await api.system.getSettings();
       
       if (response) {
-        setSettings(response);
-        setModelVersion(response.modelVersion || 'Standard');
-        setContextLength(response.contextLength || 32768);
-        setMemoryLimit(response.memoryLimit || 128);
-        setThreads(response.threads || 8);
+        const data = response as SettingsResponse;
+        setSettings(data);
+        setModelVersion(data.modelVersion || 'Standard');
+        setContextLength(data.contextLength || 32768);
+        setMemoryLimit(data.memoryLimit || 128);
+        setThreads(data.threads || 8);
       }
     } catch (err) {
       console.error('Error fetching settings:', err);
@@ -71,13 +89,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
       <div className="bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center p-4 border-b border-gray-700">
           <h2 className="text-xl font-bold flex items-center">
-            <FiSettings className="mr-2" /> {modelName} AI Settings
+            <FiSettings size={20} />
+            <span className="ml-2">{modelName} AI Settings</span>
           </h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-white"
           >
-            <FiX className="text-xl" />
+            <FiX size={20} />
           </button>
         </div>
 
@@ -91,7 +110,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
               {/* Model Version */}
               <div>
                 <h3 className="text-lg font-medium flex items-center mb-3">
-                  <FiCpu className="mr-2" /> Model Selection
+                  <FiCpu size={18} />
+                  <span className="ml-2">Model Selection</span>
                 </h3>
                 <div className="bg-gray-700 bg-opacity-50 rounded p-4 space-y-4">
                   <div>
@@ -183,7 +203,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
               {/* Benchmark Performance */}
               <div>
                 <h3 className="text-lg font-medium flex items-center mb-3">
-                  <FiSliders className="mr-2" /> Benchmark Performance
+                  <FiSliders size={18} />
+                  <span className="ml-2">Benchmark Performance</span>
                 </h3>
                 <div className="bg-gray-700 bg-opacity-50 rounded p-4">
                   <p className="text-sm text-gray-300 mb-3">
@@ -271,7 +292,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
               {/* About */}
               <div>
                 <h3 className="text-lg font-medium flex items-center mb-3">
-                  <FiInfo className="mr-2" /> About
+                  <FiInfo size={18} />
+                  <span className="ml-2">About</span>
                 </h3>
                 <div className="bg-gray-700 bg-opacity-50 rounded p-4">
                   <p className="text-sm text-gray-300">
